@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -44,10 +45,13 @@ public class Task {
     @ManyToOne
     private TaskType taskType;
 
+    @ManyToOne(cascade = CascadeType.ALL)
+    private Project project;
+
     public Task() {
     }
 
-    public Task(Long id, String taskTitle, String taskDesc, Date dueDate, Boolean done, User user, TaskType taskType) {
+    public Task(Long id, String taskTitle, String taskDesc, Date dueDate, Boolean done, User user, TaskType taskType, Project project) {
         this.id = id;
         this.taskTitle = taskTitle;
         this.taskDesc = taskDesc;
@@ -55,6 +59,7 @@ public class Task {
         this.done = done;
         this.user = user;
         this.taskType = taskType;
+        this.project = project;
     }
 
     public Long getId() {
@@ -117,17 +122,12 @@ public class Task {
         this.taskType = taskType;
     }
 
-    @Override
-    public String toString() {
-        return "{" +
-            " id='" + getId() + "'" +
-            ", taskTitle='" + getTaskTitle() + "'" +
-            ", taskDesc='" + getTaskDesc() + "'" +
-            ", dueDate='" + getDueDate() + "'" +
-            ", done='" + isDone() + "'" +
-            ", user='" + getUser() + "'" +
-            ", taskType='" + getTaskType() + "'" +
-            "}";
+    public Project getProject() {
+        return this.project;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
     }
 
     @Override
@@ -138,12 +138,26 @@ public class Task {
             return false;
         }
         Task task = (Task) o;
-        return Objects.equals(id, task.id) && Objects.equals(taskTitle, task.taskTitle) && Objects.equals(taskDesc, task.taskDesc) && Objects.equals(dueDate, task.dueDate) && Objects.equals(done, task.done) && Objects.equals(user, task.user) && Objects.equals(taskType, task.taskType);
+        return Objects.equals(id, task.id) && Objects.equals(taskTitle, task.taskTitle) && Objects.equals(taskDesc, task.taskDesc) && Objects.equals(dueDate, task.dueDate) && Objects.equals(done, task.done) && Objects.equals(user, task.user) && Objects.equals(taskType, task.taskType) && Objects.equals(project, task.project);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, taskTitle, taskDesc, dueDate, done, user, taskType);
+        return Objects.hash(id, taskTitle, taskDesc, dueDate, done, user, taskType, project);
+    }
+
+    @Override
+    public String toString() {
+        return "{" +
+            " id='" + getId() + "'" +
+            ", taskTitle='" + getTaskTitle() + "'" +
+            ", taskDesc='" + getTaskDesc() + "'" +
+            ", dueDate='" + getDueDate() + "'" +
+            ", done='" + isDone() + "'" +
+            ", user='" + getUser() + "'" +
+            ", taskType='" + getTaskType() + "'" +
+            ", project='" + getProject() + "'" +
+            "}";
     }
 
 }

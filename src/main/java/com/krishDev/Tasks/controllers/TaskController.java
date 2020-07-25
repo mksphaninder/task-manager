@@ -10,6 +10,7 @@ import javax.validation.Valid;
 
 import com.krishDev.Tasks.models.Task;
 import com.krishDev.Tasks.models.User;
+import com.krishDev.Tasks.repositories.ProjectRepository;
 import com.krishDev.Tasks.repositories.TaskRepository;
 import com.krishDev.Tasks.repositories.TaskTypeRepository;
 import com.krishDev.Tasks.repositories.UserRepository;
@@ -42,6 +43,9 @@ public class TaskController {
 
     @Autowired
     private TaskTypeRepository taskTypeRepository;
+
+    @Autowired
+    private ProjectRepository ProjectRepository;
 
     @GetMapping("/users/{id}/tasks")
     public List<Task> getTasksForUser(@PathVariable Long id) {
