@@ -52,7 +52,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(ProjectController.class)
-public class ProjectControllerTest {
+public class TestProjectController {
 
     @Autowired
     private MockMvc mockMvc;
@@ -158,6 +158,8 @@ public class ProjectControllerTest {
     public void addTask() throws JsonProcessingException, Exception {
         Mockito.when(projectRepository.findById(Mockito.anyLong())).thenReturn(Optional.ofNullable(project));
         Mockito.when(taskRepository.save(Mockito.any())).thenReturn(task);
+        Mockito.when(taskTypeRepository.findByTaskStage(Mockito.any())).thenReturn(Optional.ofNullable(new TaskType()));
+        Mockito.when(taskTypeRepository.save(Mockito.any())).thenReturn(new TaskType());
         
         mockMvc
             .perform(MockMvcRequestBuilders

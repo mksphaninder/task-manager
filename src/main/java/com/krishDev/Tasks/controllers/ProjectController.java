@@ -15,7 +15,6 @@ import com.krishDev.Tasks.repositories.TaskRepository;
 import com.krishDev.Tasks.repositories.TaskTypeRepository;
 import com.krishDev.Tasks.repositories.UserRepository;
 
-import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -145,7 +144,7 @@ public class ProjectController {
     @GetMapping("/users/{userId}/projects/{projectId}/tasks")
     public List<Task> showAllTasksForProject(@PathVariable Long userId, @PathVariable Long projectId) {
         Optional<Project> project = projectRepository.findById(projectId);
-        if(project.isPresent()) {
+        if (project.isPresent()) {
             List<Task> projectTasks = taskRepository.findByProject(project.get());
             return projectTasks;
         }
@@ -172,7 +171,7 @@ public class ProjectController {
             task.setProject(project.get());
             Optional<Object> taskType = taskTypeRepository.findByTaskStage(task.getTaskType().getTaskStage());
 
-            if(!taskType.isPresent()){
+            if (!taskType.isPresent()) {
                 TaskType savedTaskType = taskTypeRepository.save(task.getTaskType());
                 taskType = Optional.ofNullable(savedTaskType);
             }
