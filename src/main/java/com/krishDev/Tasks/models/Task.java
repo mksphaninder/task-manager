@@ -1,11 +1,8 @@
 package com.krishDev.Tasks.models;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Objects;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -15,11 +12,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import org.hibernate.annotations.NotFound;
-import org.hibernate.annotations.NotFoundAction;
 
 @Entity
 public class Task {
@@ -36,25 +28,25 @@ public class Task {
 
     private Boolean done;
 
-    @ManyToOne() @NotFound(action=NotFoundAction.IGNORE)
-    @JoinColumn(name="user_id")
-    @JsonIgnore
-    private User user;
-
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, targetEntity = TaskType.class)
+    @JoinColumn(name="taskType_id")
     private TaskType taskType;
+
+    @ManyToOne(targetEntity = Project.class, fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id")
+    private Project project;
 
     public Task() {
     }
 
-    public Task(Long id, String taskTitle, String taskDesc, Date dueDate, Boolean done, User user, TaskType taskType) {
+    public Task(Long id, String taskTitle, String taskDesc, Date dueDate, Boolean done, TaskType taskType, Project project) {
         this.id = id;
         this.taskTitle = taskTitle;
         this.taskDesc = taskDesc;
         this.dueDate = dueDate;
         this.done = done;
-        this.user = user;
         this.taskType = taskType;
+        this.project = project;
     }
 
     public Long getId() {
@@ -101,14 +93,6 @@ public class Task {
         this.done = done;
     }
 
-    public User getUser() {
-        return this.user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
     public TaskType getTaskType() {
         return this.taskType;
     }
@@ -117,17 +101,12 @@ public class Task {
         this.taskType = taskType;
     }
 
-    @Override
-    public String toString() {
-        return "{" +
-            " id='" + getId() + "'" +
-            ", taskTitle='" + getTaskTitle() + "'" +
-            ", taskDesc='" + getTaskDesc() + "'" +
-            ", dueDate='" + getDueDate() + "'" +
-            ", done='" + isDone() + "'" +
-            ", user='" + getUser() + "'" +
-            ", taskType='" + getTaskType() + "'" +
-            "}";
+    public Project getProject() {
+        return this.project;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
     }
 
     @Override
@@ -138,12 +117,27 @@ public class Task {
             return false;
         }
         Task task = (Task) o;
-        return Objects.equals(id, task.id) && Objects.equals(taskTitle, task.taskTitle) && Objects.equals(taskDesc, task.taskDesc) && Objects.equals(dueDate, task.dueDate) && Objects.equals(done, task.done) && Objects.equals(user, task.user) && Objects.equals(taskType, task.taskType);
+        return Objects.equals(id, task.id) && Objects.equals(taskTitle, task.taskTitle) && Objects.equals(taskDesc, task.taskDesc) && Objects.equals(dueDate, task.dueDate) && Objects.equals(done, task.done) && Objects.equals(taskType, task.taskType) && Objects.equals(project, task.project);
     }
+    
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, taskTitle, taskDesc, dueDate, done, user, taskType);
+        return Objects.hash(id, taskTitle, taskDesc, dueDate, done, taskType, project);
+    }
+   
+
+    @Override
+    public String toString() {
+        return "{" +
+            " id='" + getId() + "'" +
+            ", taskTitle='" + getTaskTitle() + "'" +
+            ", taskDesc='" + getTaskDesc() + "'" +
+            ", dueDate='" + getDueDate() + "'" +
+            ", done='" + isDone() + "'" +
+            ", taskType='" + getTaskType() + "'" +
+            ", project='" + getProject() + "'" +
+            "}";
     }
 
 }
