@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -14,6 +16,8 @@ import javax.persistence.OneToMany;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 public class Project {
     @Id @GeneratedValue(strategy = GenerationType.AUTO)
@@ -22,22 +26,19 @@ public class Project {
     @NotNull @Size(min = 5, max=30)
     private String project;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
-
-    @OneToMany(mappedBy = "Task")
-    private List<Task> tasks = new ArrayList<>();
 
     public Project() {
 
     }
 
-    public Project(Long id, String project, User user, List<Task> tasks) {
+    public Project(Long id, String project, User user) {
         this.id = id;
         this.project = project;
         this.user = user;
-        this.tasks = tasks;
     }
 
     public Long getId() {
@@ -56,22 +57,12 @@ public class Project {
         this.project = project;
     }
 
-    public List<Task> getTasks() {
-        return this.tasks;
+    public User getUser() {
+        return this.user;
     }
 
-    public void setTasks(List<Task> tasks) {
-        this.tasks = tasks;
-    }
-
-    public void addTask(Task task) {
-        task.setProject(this);
-        tasks.add(task);
-    }
-
-    public void removeTask(Task task) {
-        task.setProject(null);
-        tasks.remove(task);
+    public void setUser(User user) {
+        this.user = user;
     }
 
     @Override

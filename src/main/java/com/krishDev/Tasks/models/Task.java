@@ -37,27 +37,23 @@ public class Task {
 
     private Boolean done;
 
-    @ManyToOne() @NotFound(action=NotFoundAction.IGNORE)
-    @JoinColumn(name="user_id")
-    @JsonIgnore
-    private User user;
-
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, targetEntity = TaskType.class)
+    @JoinColumn(name="taskType_id")
     private TaskType taskType;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(targetEntity = Project.class, fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id")
     private Project project;
 
     public Task() {
     }
 
-    public Task(Long id, String taskTitle, String taskDesc, Date dueDate, Boolean done, User user, TaskType taskType, Project project) {
+    public Task(Long id, String taskTitle, String taskDesc, Date dueDate, Boolean done, TaskType taskType, Project project) {
         this.id = id;
         this.taskTitle = taskTitle;
         this.taskDesc = taskDesc;
         this.dueDate = dueDate;
         this.done = done;
-        this.user = user;
         this.taskType = taskType;
         this.project = project;
     }
@@ -106,14 +102,6 @@ public class Task {
         this.done = done;
     }
 
-    public User getUser() {
-        return this.user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
     public TaskType getTaskType() {
         return this.taskType;
     }
@@ -138,13 +126,15 @@ public class Task {
             return false;
         }
         Task task = (Task) o;
-        return Objects.equals(id, task.id) && Objects.equals(taskTitle, task.taskTitle) && Objects.equals(taskDesc, task.taskDesc) && Objects.equals(dueDate, task.dueDate) && Objects.equals(done, task.done) && Objects.equals(user, task.user) && Objects.equals(taskType, task.taskType) && Objects.equals(project, task.project);
+        return Objects.equals(id, task.id) && Objects.equals(taskTitle, task.taskTitle) && Objects.equals(taskDesc, task.taskDesc) && Objects.equals(dueDate, task.dueDate) && Objects.equals(done, task.done) && Objects.equals(taskType, task.taskType) && Objects.equals(project, task.project);
     }
+    
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, taskTitle, taskDesc, dueDate, done, user, taskType, project);
+        return Objects.hash(id, taskTitle, taskDesc, dueDate, done, taskType, project);
     }
+   
 
     @Override
     public String toString() {
@@ -154,7 +144,6 @@ public class Task {
             ", taskDesc='" + getTaskDesc() + "'" +
             ", dueDate='" + getDueDate() + "'" +
             ", done='" + isDone() + "'" +
-            ", user='" + getUser() + "'" +
             ", taskType='" + getTaskType() + "'" +
             ", project='" + getProject() + "'" +
             "}";
