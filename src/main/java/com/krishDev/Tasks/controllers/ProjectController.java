@@ -3,6 +3,7 @@ package com.krishDev.Tasks.controllers;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -74,7 +75,9 @@ public class ProjectController {
     public ResponseEntity<Object> addProject(@PathVariable Long userId, @Valid @RequestBody Project project,
             BindingResult result) {
         if (result.hasErrors()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, result.getAllErrors().toString());
+            String errors = result.getFieldErrors().stream().map(x -> x.getDefaultMessage())
+                    .collect(Collectors.toList()).toString();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, errors);
         }
 
         Optional<User> user = userRepository.findById(userId);
@@ -100,7 +103,9 @@ public class ProjectController {
     public ResponseEntity<Object> editProject(@PathVariable Long userId, @PathVariable Long projectId,
             @Valid @RequestBody Project project, BindingResult result) {
         if (result.hasErrors()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, result.getAllErrors().toString());
+            String errors = result.getFieldErrors().stream().map(x -> x.getDefaultMessage())
+                    .collect(Collectors.toList()).toString();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, errors);
         }
 
         Optional<User> user = userRepository.findById(userId);
@@ -116,9 +121,15 @@ public class ProjectController {
             Project savedProject = projectRepository.save(project);
             return ResponseEntity.ok().build();
         }
+
+        if (!dbProject.get().getUser().equals(user.get())) {
+            return new ResponseEntity<Object>("Not Authorized", HttpStatus.UNAUTHORIZED);
+        }
+
         dbProject.get().setProject(project.getProject());
         Project savedProject = projectRepository.save(dbProject.get());
         return ResponseEntity.ok().build();
+
     }
 
     /**
@@ -130,8 +141,13 @@ public class ProjectController {
      */
     @DeleteMapping("/users/{userId}/projects/{projectId}")
     public ResponseEntity<Object> editProject(@PathVariable Long userId, @PathVariable Long projectId) {
-        projectRepository.deleteById(projectId);
-        return ResponseEntity.ok().build();
+        Optional<User> user = userRepository.findById(userId);
+        Optional<Project> project = projectRepository.findById(projectId);
+        if (user.get().equals(project.get().getUser())) {
+            projectRepository.deleteById(projectId);
+            return ResponseEntity.ok().build();
+        }
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Authorized");
     }
 
     /**
@@ -163,23 +179,34 @@ public class ProjectController {
     public ResponseEntity<Object> AddTaskForProject(@PathVariable Long userId, @PathVariable Long projectId,
             @Valid @RequestBody Task task, BindingResult result) {
         if (result.hasErrors()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, result.getAllErrors().toString());
+            String errors = result.getFieldErrors().stream().map(x -> x.getDefaultMessage())
+                    .collect(Collectors.toList()).toString();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, errors);
         }
         Optional<Project> project = projectRepository.findById(projectId);
-
+        Optional<User> user = userRepository.findById(userId);
         if (project.isPresent()) {
-            task.setProject(project.get());
-            Optional<Object> taskType = taskTypeRepository.findByTaskStage(task.getTaskType().getTaskStage());
+            System.out.println(user.get());
+            System.out.println(project.get().getUser());
+            System.out.println(user.get().equals(project.get().getUser()));
+            if (user.get().equals(project.get().getUser())) {
+                task.setProject(project.get());
+                String taskStage = task.getTaskType().getTaskStage();
+                Optional<Object> taskType = taskTypeRepository.findByTaskStage(taskStage);
 
-            if (!taskType.isPresent()) {
-                TaskType savedTaskType = taskTypeRepository.save(task.getTaskType());
-                taskType = Optional.ofNullable(savedTaskType);
+                if (!taskType.isPresent()) {
+                    TaskType savedTaskType = taskTypeRepository.save(task.getTaskType());
+                    taskType = Optional.ofNullable(savedTaskType);
+                }
+                task.setTaskType((TaskType) taskType.get());
+                Task savedTask = taskRepository.save(task);
+                URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                        .buildAndExpand(savedTask.getId()).toUri();
+                return ResponseEntity.created(location).body(savedTask);
+
+            } else {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Authorized");
             }
-            task.setTaskType((TaskType) taskType.get());
-            Task savedTask = taskRepository.save(task);
-            URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-                    .buildAndExpand(savedTask.getId()).toUri();
-            return ResponseEntity.created(location).body(savedTask);
         }
         return new ResponseEntity<>("Project does not exist", HttpStatus.NOT_FOUND);
     }
@@ -189,15 +216,36 @@ public class ProjectController {
             @PathVariable Long taskId, @Valid @RequestBody Task task, BindingResult result) {
 
         if (result.hasErrors()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, result.getAllErrors().toString());
+            String errors = result.getFieldErrors().stream().map(x -> x.getDefaultMessage())
+                    .collect(Collectors.toList()).toString();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, errors);
         }
         Optional<Project> project = projectRepository.findById(projectId);
+        Optional<User> user = userRepository.findById(userId);
+        Optional<Task> dbTask = taskRepository.findById(taskId);
+        if (project.isPresent() && dbTask.isPresent()) {
+            if (user.get().equals(project.get().getUser())) {
+                if (dbTask.isPresent()) {
+                    task.setId(dbTask.get().getId());
+                }
+                task.setProject(project.get());
+                String taskStage = task.getTaskType().getTaskStage();
+                Optional<Object> taskType = taskTypeRepository.findByTaskStage(taskStage);
 
-        if (project.isPresent()) {
-            task.setProject(project.get());
-            taskRepository.save(task);
+                if (!taskType.isPresent()) {
+                    TaskType savedTaskType = taskTypeRepository.save(task.getTaskType());
+                    taskType = Optional.ofNullable(savedTaskType);
+                }
+                task.setTaskType((TaskType) taskType.get());
+                Task savedTask = taskRepository.save(task);
+                URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                        .buildAndExpand(savedTask.getId()).toUri();
+                return dbTask.isPresent() ? new ResponseEntity<>(HttpStatus.OK)
+                        : ResponseEntity.created(location).body(savedTask);
 
-            return ResponseEntity.ok().build();
+            } else {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Authorized");
+            }
         }
         return new ResponseEntity<>("Project does not exist", HttpStatus.NOT_FOUND);
     }
@@ -206,11 +254,16 @@ public class ProjectController {
     public void deleteTask(@PathVariable Long userId, @PathVariable Long projectId, @PathVariable Long taskId) {
 
         Optional<Project> project = projectRepository.findById(projectId);
+        Optional<User> user = userRepository.findById(userId);
 
-        if (project.isPresent()) {
-            Optional<Task> task = taskRepository.findById(taskId);
-            if (task.isPresent()) {
-                taskRepository.delete(task.get());
+        if (project.isPresent() && user.isPresent()) {
+            if(user.get().equals(project.get().getUser())){
+                Optional<Task> task = taskRepository.findById(taskId);
+                if (task.isPresent()) {
+                    taskRepository.delete(task.get());
+                }
+            }else{
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
             }
         }
     }
