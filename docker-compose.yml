@@ -1,13 +1,14 @@
-version: '3.1'
+version: "3.1"
 
 services:
   phpmyadmin:
-      image: phpmyadmin/phpmyadmin
-      container_name: phpmyadmin
-      environment:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
       - PMA_ARBITRARY=1
-      restart: always
-      ports:
+      - PMA_HOST=mysql-task-manager
+    restart: always
+    ports:
       - 1000:80
-      volumes:
+    volumes:
       - /sessions

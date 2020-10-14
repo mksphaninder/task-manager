@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -53,6 +54,7 @@ public class ProjectController {
      */
     @GetMapping("/users/{userId}/projects")
     public List<Project> showProjects(@PathVariable Long userId) {
+
         if (userId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
@@ -158,9 +160,14 @@ public class ProjectController {
      * @return List of Tasks
      */
     @GetMapping("/users/{userId}/projects/{projectId}/tasks")
-    public List<Task> showAllTasksForProject(@PathVariable Long userId, @PathVariable Long projectId) {
+    public List<Task> showAllTasksForProject(@PathVariable Long userId, @PathVariable Long projectId,
+            @RequestParam(name = "types", required = false, defaultValue = "backlog") String types) {
         Optional<Project> project = projectRepository.findById(projectId);
         if (project.isPresent()) {
+            if (!types.isEmpty()) {
+                Optional<TaskType> taskStage = taskTypeRepository.findByTaskStage(types);
+                return taskRepository.findByProjectAndTaskType(project.get(), taskStage.get());
+            }
             List<Task> projectTasks = taskRepository.findByProject(project.get());
             return projectTasks;
         }
@@ -192,7 +199,7 @@ public class ProjectController {
             if (user.get().equals(project.get().getUser())) {
                 task.setProject(project.get());
                 String taskStage = task.getTaskType().getTaskStage();
-                Optional<Object> taskType = taskTypeRepository.findByTaskStage(taskStage);
+                Optional<TaskType> taskType = taskTypeRepository.findByTaskStage(taskStage);
 
                 if (!taskType.isPresent()) {
                     TaskType savedTaskType = taskTypeRepository.save(task.getTaskType());
@@ -230,7 +237,7 @@ public class ProjectController {
                 }
                 task.setProject(project.get());
                 String taskStage = task.getTaskType().getTaskStage();
-                Optional<Object> taskType = taskTypeRepository.findByTaskStage(taskStage);
+                Optional<TaskType> taskType = taskTypeRepository.findByTaskStage(taskStage);
 
                 if (!taskType.isPresent()) {
                     TaskType savedTaskType = taskTypeRepository.save(task.getTaskType());
@@ -247,22 +254,21 @@ public class ProjectController {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Authorized");
             }
         }
-        return new ResponseEntity<>("Project does not exist", HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>("Project or task does not exist", HttpStatus.NOT_FOUND);
     }
 
     @DeleteMapping("/users/{userId}/projects/{projectId}/tasks/{taskId}")
     public void deleteTask(@PathVariable Long userId, @PathVariable Long projectId, @PathVariable Long taskId) {
-
         Optional<Project> project = projectRepository.findById(projectId);
         Optional<User> user = userRepository.findById(userId);
 
         if (project.isPresent() && user.isPresent()) {
-            if(user.get().equals(project.get().getUser())){
+            if (user.get().equals(project.get().getUser())) {
                 Optional<Task> task = taskRepository.findById(taskId);
                 if (task.isPresent()) {
                     taskRepository.delete(task.get());
                 }
-            }else{
+            } else {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
             }
         }

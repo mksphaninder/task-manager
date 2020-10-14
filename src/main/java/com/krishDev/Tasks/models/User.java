@@ -15,6 +15,8 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.PastOrPresent;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 public class User {
 
@@ -22,21 +24,28 @@ public class User {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @NotEmpty(message = "Name cannot be empty") @Size(min = 3, max = 30, message = "username should be between 3 to 16 chars")
+    @NotEmpty(message = "Name cannot be empty")
+    @Size(min = 3, max = 30, message = "username should be between 3 to 16 chars")
     private String username;
 
-    @Column(unique = true) @NotEmpty(message = "Name cannot be empty") @Email(message = "Invalid email")
+    @Column(unique = true)
+    @NotEmpty(message = "Name cannot be empty")
+    @Email(message = "Invalid email")
     private String email;
 
-    @Temporal(TemporalType.DATE) @PastOrPresent(message = "Date must be in the past")
+    @Temporal(TemporalType.DATE)
+    @PastOrPresent(message = "Date must be in the past")
     private Date DOB;
-    
-    @NotEmpty @Size(min = 5, max = 16)
+
+    @NotEmpty
+    @Size(min = 5, max = 16)
+    @JsonIgnore
     private String password;
 
-    public User() {}
+    public User() {
+    }
 
-    public User(Long id,String username, String email, Date DOB, String password) {
+    public User(Long id, String username, String email, Date DOB, String password) {
         this.id = id;
         this.username = username;
         this.email = email;
@@ -46,13 +55,8 @@ public class User {
 
     @Override
     public String toString() {
-        return "{" +
-            " id='" + getId() + "'" +
-            ", username='" + getUsername() + "'" +
-            ", email='" + getEmail() + "'" +
-            ", DOB='" + getDOB() + "'" +
-            ", password='" + getPassword() + "'" +
-            "}";
+        return "{" + " id='" + getId() + "'" + ", username='" + getUsername() + "'" + ", email='" + getEmail() + "'"
+                + ", DOB='" + getDOB() + "'" + ", password='" + getPassword() + "'" + "}";
     }
 
     public Long getId() {
@@ -103,12 +107,15 @@ public class User {
             return false;
         }
         User user = (User) o;
-        return Objects.equals(id, user.id) && Objects.equals(username, user.username) && Objects.equals(email, user.email) && Objects.equals(DOB, user.DOB) && Objects.equals(password, user.password);
+        // return Objects.equals(id, user.id) && Objects.equals(username, user.username)
+        // && Objects.equals(email, user.email) && Objects.equals(DOB, user.DOB) &&
+        // Objects.equals(password, user.password);
+        return id != null && id.equals(user.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, username, email, DOB, password);
+        return 31;
     }
 
 }
